@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Model files (large binary files)
+omnivoice_model/
+omnivoice_prompt_cache/
+
+# Database (local data)
+*.db
+
+# Temporary audio files
+*.wav
+*.mp3
+*.flac
+*.ogg
+
+# Voice library audio (local user data)
+omnivoice_voice_library/
+vieneu_voice_library/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# PyArmor
+_tmp_pyarmor_*/
+pyarmor_runtime_000000/
+
+# Build artifacts
+build/
+*.spec
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Misc
+analysis_results.md
+plans/

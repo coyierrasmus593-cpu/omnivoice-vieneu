@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python build_omnivoice.py)",
+      "Bash(uv sync:*)",
+      "Bash(python -m py_compile \"c:/Users/Admin/Desktop/Omni1/src/core/engine.py\" \"c:/Users/Admin/Desktop/Omni1/src/ui/pages/tts_studio.py\" \"c:/Users/Admin/Desktop/Omni1/build_omnivoice.py\")",
+      "Bash(python main.py)",
+      "Bash(python -c \"import json, pathlib; p=pathlib.Path\\(r'c:/Users/Admin/Desktop/Omni1/omnivoice_voice_library/voices.json'\\); data=json.loads\\(p.read_text\\(encoding='utf-8'\\)\\); print\\(len\\(data.get\\('voices', []\\)\\)\\)\")",
+      "Bash(python -)"
+    ]
+  }
+}
