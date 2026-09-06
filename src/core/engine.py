@@ -116,6 +116,7 @@ class VoiceEngine:
         self.dtype = torch.float32
         self.is_loaded: bool = False
         self._current_prompt = None  # cached VoiceClonePrompt
+        self._current_ref_audio_path: str | None = None  # ref audio path for VieNeu
         if prompt_cache_dir is None:
             self._prompt_cache_dir = APP_DATA_DIR / PROMPT_CACHE_DIRNAME
         else:
@@ -503,12 +504,14 @@ class VoiceEngine:
         )
         self._save_prompt_cache(cache_key, cache_payload, prompt)
         self._current_prompt = prompt
+        self._current_ref_audio_path = str(audio_path)
         return prompt
 
     # ------------------------------------------------------------------
     # Text chunking for long inputs
     # ------------------------------------------------------------------
     MAX_CHUNK_CHARS = 200  # safe limit for diffusion TTS models
+    VIENEU_MAX_CHUNK_CHARS = 150  # smaller chunks for VieNeu (better prosody per sentence)
 
     @staticmethod
     def _split_text_into_chunks(text: str, max_chars: int = 200) -> list[str]:
@@ -548,6 +551,28 @@ class VoiceEngine:
 
         return chunks if chunks else [text]
 
+    @staticmethod
+    def _make_silence(duration_ms: int, sample_rate: int = 48000) -> np.ndarray:
+        """Return a numpy array of silence with the given duration in milliseconds."""
+        n_samples = int(sample_rate * duration_ms / 1000)
+        return np.zeros(n_samples, dtype=np.float32)
+
+    @staticmethod
+    def _pause_ms_for_chunk(chunk: str) -> int:
+        """Return silence duration (ms) to insert AFTER this chunk based on trailing punctuation."""
+        text = chunk.rstrip()
+        if not text:
+            return 0
+        last = text[-1]
+        if last in '.!?…':
+            return 600   # sentence end — longer pause
+        elif last in ',;:':
+            return 250   # clause break — short pause
+        elif last in ')""':
+            return 350
+        else:
+            return 150   # chunk boundary without punctuation
+
     # ------------------------------------------------------------------
     # Speech generation
     # ------------------------------------------------------------------
@@ -584,7 +609,9 @@ class VoiceEngine:
         using_fallback_prompt = voice_prompt is None and self._current_prompt is not None
 
         # Split long text into manageable chunks
-        chunks = self._split_text_into_chunks(text, self.MAX_CHUNK_CHARS)
+        is_vieneu = hasattr(self.model, "infer")
+        max_chars = self.VIENEU_MAX_CHUNK_CHARS if is_vieneu else self.MAX_CHUNK_CHARS
+        chunks = self._split_text_into_chunks(text, max_chars)
         total = len(chunks)
 
         logger.info(
@@ -625,14 +652,20 @@ class VoiceEngine:
                     "guidance_scale": guidance_scale,
                 }
             if hasattr(self.model, "infer"):
-                # VieNeu generation
+                # VieNeu generation — use stored ref audio path, not prompt object
+                ref_audio_path = self._current_ref_audio_path
                 audio_np = self.model.infer(
                     text=chunk,
-                    ref_audio=prompt.audio_path if prompt else None,
+                    ref_audio=ref_audio_path if ref_audio_path else None,
                 )
                 if isinstance(audio_np, torch.Tensor):
                     audio_np = audio_np.cpu().squeeze().numpy().astype(np.float32)
                 all_audio.append(audio_np)
+                # Insert natural pause after each chunk (except the last)
+                if i < total - 1:
+                    pause_ms = self._pause_ms_for_chunk(chunk)
+                    if pause_ms > 0:
+                        all_audio.append(self._make_silence(pause_ms, sample_rate=48000))
                 continue
 
             if prompt is not None:
@@ -646,7 +679,6 @@ class VoiceEngine:
             if isinstance(audio_out, torch.Tensor):
                 audio_np = audio_out.cpu().squeeze().numpy().astype(np.float32)
             else:
-                import numpy as np
                 audio_np = np.squeeze(audio_out).astype(np.float32)
             all_audio.append(audio_np)
 
@@ -656,8 +688,8 @@ class VoiceEngine:
         else:
             result = np.concatenate(all_audio, axis=0)
 
-        is_vieneu = hasattr(self.model, "infer")
-        return result, 48000 if is_vieneu else SAMPLE_RATE
+        is_vieneu_model = hasattr(self.model, "infer")
+        return result, 48000 if is_vieneu_model else SAMPLE_RATE
 
     # ------------------------------------------------------------------
     # Transcription

@@ -315,10 +315,17 @@ class TTSStudioPage(QWidget):
         self.combo_format.setMaximumWidth(240)
         output_btn_row.addWidget(self.combo_format)
 
-        self.btn_choose_output_dir = QPushButton("Chọn thư mục output")
+        self.btn_choose_output_dir = QPushButton("📁 Chọn thư mục")
         self.btn_choose_output_dir.setObjectName("btn_secondary")
         self.btn_choose_output_dir.clicked.connect(self._choose_output_dir)
         output_btn_row.addWidget(self.btn_choose_output_dir)
+
+        self.btn_open_output_dir = QPushButton("🗂 Mở thư mục")
+        self.btn_open_output_dir.setObjectName("btn_secondary")
+        self.btn_open_output_dir.setToolTip("Mở thư mục output trong Explorer")
+        self.btn_open_output_dir.clicked.connect(self._open_output_dir)
+        self.btn_open_output_dir.setEnabled(False)
+        output_btn_row.addWidget(self.btn_open_output_dir)
         output_btn_row.addStretch()
 
         layout.addLayout(output_btn_row)
@@ -765,6 +772,16 @@ class TTSStudioPage(QWidget):
             i += 1
 
     @Slot()
+    def _open_output_dir(self) -> None:
+        """Open the selected output folder in Windows Explorer."""
+        import subprocess
+        folder = self._output_dir
+        if folder and Path(folder).exists():
+            subprocess.Popen(["explorer", str(Path(folder))])
+        else:
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.information(self, "Thư mục output", "Chưa chọn thư mục output hoặc thư mục không tồn tại.")
+
     def _choose_output_dir(self) -> None:
         start_dir = self._output_dir or str(Path.home())
         folder = QFileDialog.getExistingDirectory(self, "Chọn thư mục output", start_dir)
@@ -772,6 +789,7 @@ class TTSStudioPage(QWidget):
             return
         self._output_dir = folder
         self.lbl_output_dir.setText(folder)
+        self.btn_open_output_dir.setEnabled(True)
         self._update_generate_button()
 
     @Slot()
