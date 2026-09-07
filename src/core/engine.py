@@ -450,11 +450,21 @@ class VoiceEngine:
             ref_text: Transcript of reference audio. If None, auto-transcribed.
 
         Returns:
-            VoiceClonePrompt object (can be reused for multiple generations).
+            VoiceClonePrompt object or audio_path string for VieNeu.
         """
         if not self.is_loaded:
             raise RuntimeError("Model not loaded. Call load_model() first.")
 
+        # ── VieNeu path ──────────────────────────────────────────────────
+        # VieNeu's infer() accepts a raw audio file path directly.
+        # It does NOT have create_voice_clone_prompt — just store the path.
+        if hasattr(self.model, "infer"):
+            logger.info("VieNeu model: storing ref audio path for cloning: %s", audio_path)
+            self._current_ref_audio_path = str(audio_path)
+            self._current_prompt = audio_path  # non-None sentinel so generate() knows prompt is set
+            return audio_path
+
+        # ── OmniVoice path ───────────────────────────────────────────────
         import soundfile as sf
 
         cache_key, cache_payload = self._build_prompt_cache_key(audio_path, ref_text)
