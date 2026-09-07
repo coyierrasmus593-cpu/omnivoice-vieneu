@@ -662,12 +662,30 @@ class VoiceEngine:
                     "guidance_scale": guidance_scale,
                 }
             if hasattr(self.model, "infer"):
-                # VieNeu generation — use stored ref audio path, not prompt object
+                # VieNeu generation — use stored ref audio path, not prompt object.
+                # VieNeu calls torchaudio.load() internally, which requires TorchCodec.
+                # We monkey-patch torchaudio.load with soundfile to bypass that dependency.
                 ref_audio_path = self._current_ref_audio_path
-                audio_np = self.model.infer(
-                    text=chunk,
-                    ref_audio=ref_audio_path if ref_audio_path else None,
-                )
+                import soundfile as _sf
+
+                _orig_load = torchaudio.load
+
+                def _sf_load(path, *args, **kwargs):
+                    data, sr = _sf.read(str(path), dtype="float32", always_2d=True)
+                    if data.shape[1] > 1:
+                        data = data.mean(axis=1, keepdims=True)
+                    waveform = torch.from_numpy(data.T)  # (channels, time)
+                    return waveform, sr
+
+                torchaudio.load = _sf_load
+                try:
+                    audio_np = self.model.infer(
+                        text=chunk,
+                        ref_audio=ref_audio_path if ref_audio_path else None,
+                    )
+                finally:
+                    torchaudio.load = _orig_load  # always restore
+
                 if isinstance(audio_np, torch.Tensor):
                     audio_np = audio_np.cpu().squeeze().numpy().astype(np.float32)
                 all_audio.append(audio_np)
@@ -677,6 +695,7 @@ class VoiceEngine:
                     if pause_ms > 0:
                         all_audio.append(self._make_silence(pause_ms, sample_rate=48000))
                 continue
+
 
             if prompt is not None:
                 kwargs["voice_clone_prompt"] = prompt
