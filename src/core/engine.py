@@ -239,6 +239,8 @@ class VoiceEngine:
             self.model = Vieneu(mode="v3turbo")
             self._asr_enabled = False
             self.is_loaded = True
+            if self._current_ref_audio_path:
+                self._current_prompt = self._current_ref_audio_path
             _emit("Model loaded successfully!")
             return dev_info
 
@@ -258,6 +260,11 @@ class VoiceEngine:
                 load_asr=load_asr,  # enable auto-transcription
             )
             self._asr_enabled = load_asr
+            self.is_loaded = True
+            if isinstance(self._current_prompt, str):
+                self._current_prompt = None
+            _emit("Model loaded successfully!")
+            return dev_info
         except RuntimeError as exc:
             # GPU OOM → fallback to CPU
             if "CUDA" in str(exc) or "out of memory" in str(exc):
@@ -713,7 +720,14 @@ class VoiceEngine:
 
 
             if prompt is not None:
-                kwargs["voice_clone_prompt"] = prompt
+                if isinstance(prompt, str):
+                    logger.info("Converting string voice prompt path '%s' to OmniVoice VoiceClonePrompt...", prompt)
+                    prompt = self.create_voice_prompt(audio_path=prompt)
+
+                if hasattr(prompt, "ref_text"):
+                    kwargs["voice_clone_prompt"] = prompt
+                else:
+                    logger.warning("Voice clone prompt object invalid or incompatible with OmniVoice: %s", type(prompt))
 
             audio_tensors = self.model.generate(**kwargs)
 
