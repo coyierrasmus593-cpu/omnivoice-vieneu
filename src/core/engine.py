@@ -12,6 +12,7 @@ Responsibilities:
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import logging
 import os
@@ -21,6 +22,15 @@ import sys
 import time
 from pathlib import Path
 from typing import Callable, Optional
+
+# Ensure standard streams are UTF-8 safe with replacement
+for _s in ("stdout", "stderr"):
+    _st = getattr(sys, _s, None)
+    if _st is not None and hasattr(_st, "reconfigure"):
+        try:
+            _st.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 import numpy as np
 import torch

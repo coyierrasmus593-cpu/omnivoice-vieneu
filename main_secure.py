@@ -8,10 +8,38 @@ Used by PyInstaller as the actual entry point for distribution builds.
 from __future__ import annotations
 
 import hashlib
+import io
 import logging
 import os
 import sys
 import time
+
+def _setup_utf8_streams() -> None:
+    """Ensure sys.stdout and sys.stderr use UTF-8 encoding with character replacement to prevent UnicodeEncodeError in GUI executables."""
+    os.environ["PYTHONIOENCODING"] = "utf-8"
+    os.environ["PYTHONUTF8"] = "1"
+
+    class NullStream(io.TextIOBase):
+        def write(self, s: str) -> int:
+            return len(s) if s else 0
+        def flush(self) -> None:
+            pass
+
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if stream is None:
+            setattr(sys, stream_name, NullStream())
+        else:
+            try:
+                if hasattr(stream, "reconfigure"):
+                    stream.reconfigure(encoding="utf-8", errors="replace")
+                elif hasattr(stream, "buffer"):
+                    setattr(sys, stream_name, io.TextIOWrapper(stream.buffer, encoding="utf-8", errors="replace"))
+            except Exception:
+                pass
+
+_setup_utf8_streams()
+
 
 # ==============================================================================
 # ANTI-DEBUG — multi-layer checks (runs before anything else)
