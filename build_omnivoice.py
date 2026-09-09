@@ -110,6 +110,10 @@ EXTRA_HIDDEN_IMPORTS = [
     "safetensors",
     "huggingface_hub",
     "tokenizers",
+    # VieNeu TTS & SEA G2P
+    "vieneu",
+    "sea_g2p",
+    "vieneu_utils",
     # Misc
     "numpy",
     "sqlite3",
@@ -120,6 +124,9 @@ COLLECT_ALL_PACKAGES = [
     "torchaudio",
     "transformers",
     "omnivoice",
+    "vieneu",
+    "sea_g2p",
+    "vieneu_utils",
     "imageio_ffmpeg",
     "PySide6",
     "safetensors",
