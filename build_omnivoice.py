@@ -436,8 +436,8 @@ def guard_checks(skip_pyarmor: bool = False) -> None:
         fail("Missing src/core/_internal_hashes.py")
 
     if not skip_pyarmor:
-        if _get_pyarmor_cmd() is None:
-            fail("PyArmor is not installed/found. Install pyarmor or use --skip-pyarmor")
+        # PyArmor is now removed from the build process
+        pass
 
 
 def check_torch_cuda() -> None:
@@ -821,16 +821,8 @@ def main() -> int:
         check_torch_cuda()
         guard_checks(skip_pyarmor=args.skip_pyarmor)
 
-        if not args.skip_pyarmor:
-            backup_source_files()
-            source_backed_up = True
-            pyarmor_applied = run_pyarmor_obfuscation(required=True)
-            if not pyarmor_applied:
-                restore_source_files()
-                source_backed_up = False
-                print("[WARN] Continue build without PyArmor obfuscation (runtime blocked by policy)")
-        else:
-            print("[INFO] --skip-pyarmor enabled")
+        # PyArmor has been removed from the build process per user request
+        print("[INFO] PyArmor obfuscation is permanently disabled.")
 
         clean_output()
 

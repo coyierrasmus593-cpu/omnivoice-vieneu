@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QFont, QIcon
 
 
-APP_DISPLAY_NAME = "AI86-VoiceCloner"
+APP_DISPLAY_NAME = "89Media TTS Pro"
 APP_DEFAULT_VERSION = "V1.1.1-13042026"
 APP_ORGANIZATION = "AI86.PRO"
 MANIFEST_FILENAME = "RELEASE_MANIFEST.json"
