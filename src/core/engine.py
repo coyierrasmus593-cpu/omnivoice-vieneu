@@ -620,8 +620,12 @@ class VoiceEngine:
 
         # Split long text into manageable chunks
         is_vieneu = hasattr(self.model, "infer")
-        max_chars = self.VIENEU_MAX_CHUNK_CHARS if is_vieneu else self.MAX_CHUNK_CHARS
-        chunks = self._split_text_into_chunks(text, max_chars)
+        if is_vieneu:
+            # VieNeu handles long text natively and maintains voice stability across its
+            # own internal chunks via cross-fading. Manual chunking breaks this context.
+            chunks = [text]
+        else:
+            chunks = self._split_text_into_chunks(text, self.MAX_CHUNK_CHARS)
         total = len(chunks)
 
         logger.info(
@@ -682,6 +686,7 @@ class VoiceEngine:
                     audio_np = self.model.infer(
                         text=chunk,
                         ref_audio=ref_audio_path if ref_audio_path else None,
+                        crossfade_p=1.0,  # Enable crossfade between internal chunks for maximum voice stability
                     )
                 finally:
                     torchaudio.load = _orig_load  # always restore
