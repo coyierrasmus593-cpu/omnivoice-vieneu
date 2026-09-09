@@ -4,10 +4,9 @@ SHA-256 hashes of critical files in _internal/.
 Verified by _verify_internal_integrity() in main_secure.py.
 """
 HASHES: dict[str, str] = {
-    "PySide6/QtCore.pyd": "9d9ec6d5244ec8cc93156386394fe9d0fc96e749c2969fe013bf15f5c5a9784d",
-    "PySide6/QtWidgets.pyd": "f14f92c99618246ee9a08632b46fc2493fb82607edb2f75318e44731ddcc7187",
-    "_cffi_backend.cp314-win_amd64.pyd": "58bbe1eb15f9ab8e9ea45715a8311e2366b360d910a4685448bdd728d5177a01",
-    "cryptography/hazmat/bindings/_rust.pyd": "fe5c4cdb5512f792fb0f5b3ce0cd8c1484614851d56ff5d1e7215213eb9e0bca",
+    "PySide6/QtCore.pyd": "74f96322c5e9cea73aefd2ed5870e5275336b31f552fcd32f12fc81d23f1bc6f",
+    "PySide6/QtWidgets.pyd": "f12f4ca641998e5706d5f7b0023147d573f0f2d2361e26dadf31bdbf05fbfd1d",
+    "_cffi_backend.cp311-win_amd64.pyd": "0b5c05bf3e9da14c33566d2c546fb7618ac7fc2b89365a66cfb1082ffe3d898d",
+    "cryptography/hazmat/bindings/_rust.pyd": "6a42262974f0e086c1f2defaff4ccd9fb25046cf193422135e2dda5b4b29b2a2",
     "nacl/_sodium.pyd": "57822e7aed944269943bcb855fc14560a5b6ae38869de4e3d00c380a5119ecc7",
-    "pyarmor_runtime_000000/pyarmor_runtime.pyd": "6617abdfc76d48ac5dac91675694517319f06eaf2e531ed911b7fe2326c29f08",
 }
