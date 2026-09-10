@@ -32,7 +32,27 @@ def _setup_utf8_streams() -> None:
                 elif hasattr(stream, "buffer"):
                     setattr(sys, stream_name, io.TextIOWrapper(stream.buffer, encoding="utf-8", errors="replace"))
             except Exception:
-                pass
+                setattr(sys, stream_name, NullStream())
+
+    # Protect logging.StreamHandler against UnicodeEncodeError & AttributeError (NoneType write)
+    try:
+        _orig_emit = logging.StreamHandler.emit
+        def _safe_emit(self, record):
+            if getattr(self, "stream", None) is None:
+                self.stream = sys.stderr or NullStream()
+            try:
+                _orig_emit(self, record)
+            except Exception:
+                try:
+                    msg = self.format(record)
+                    safe_msg = msg.encode("ascii", errors="replace").decode("ascii")
+                    if self.stream and hasattr(self.stream, "write"):
+                        self.stream.write(safe_msg + "\n")
+                except Exception:
+                    pass
+        logging.StreamHandler.emit = _safe_emit
+    except Exception:
+        pass
 
 _setup_utf8_streams()
 

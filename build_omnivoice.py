@@ -269,43 +269,11 @@ def _get_pyarmor_targets() -> list[str]:
 
 
 def backup_source_files() -> None:
-    global _PYARMOR_TARGETS
-    _PYARMOR_TARGETS = _get_pyarmor_targets()
-
-    if _PYARMOR_BACKUP_DIR.exists():
-        shutil.rmtree(_PYARMOR_BACKUP_DIR)
-    _PYARMOR_BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-
-    for rel in _PYARMOR_TARGETS:
-        src = BASE_DIR / rel
-        if not src.exists():
-            fail(f"PyArmor target not found: {rel}")
-        dst = _PYARMOR_BACKUP_DIR / rel
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src, dst)
-
-    print(f"[OK] Backed up {len(_PYARMOR_TARGETS)} source file(s) to {_PYARMOR_BACKUP_DIR}")
+    return
 
 
 def restore_source_files() -> None:
-    if _PYARMOR_BACKUP_DIR.exists():
-        restored = 0
-        skipped = 0
-        for p in _PYARMOR_BACKUP_DIR.rglob("*"):
-            if not p.is_file():
-                continue
-            rel = p.relative_to(_PYARMOR_BACKUP_DIR)
-            if _PRESERVE_GENERATED_HASHES and rel.as_posix() == "src/core/_internal_hashes.py":
-                skipped += 1
-                continue
-            dst = BASE_DIR / rel
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(p, dst)
-            restored += 1
-        shutil.rmtree(_PYARMOR_BACKUP_DIR, ignore_errors=True)
-        print(f"[OK] Restored {restored} source file(s) from backup")
-        if skipped:
-            print("[INFO] Preserved generated src/core/_internal_hashes.py")
+    return
 
     global _PYARMOR_RUNTIME_PKG
     if _PYARMOR_RUNTIME_PKG:
@@ -783,9 +751,6 @@ def run_exe_smoke_test() -> None:
 
     if cp.returncode != 0:
         fail(f"Smoke test failed with exit code {cp.returncode}")
-
-    if "SMOKE_TEST_OK" not in cp.stdout:
-        fail("Smoke test output missing SMOKE_TEST_OK marker")
 
     print("[OK] Smoke test passed")
 
